@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Y-DNA Forschung in der Region Landskron">
+<title>Y-DNA Forschung in der Region Landskron</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --bg:#f7f9fb;--surface:#ffffff;--surface2:#f1f5f8;--text:#172536;--muted:#607080;
+  --line:#d8e1e8;--accent:#1687a7;--accent2:#0e6f8b;--soft:#e8f4f7;
+  --shadow:0 8px 28px rgba(22,45,64,.08);--radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.6}
+a{color:var(--accent2);text-decoration:none}
+a:hover{text-decoration:underline}
+nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.navin{max-width:1240px;margin:auto;padding:13px 22px;display:flex;align-items:center;gap:24px}
+.brand{font-weight:800;letter-spacing:.04em;white-space:nowrap}
+.brand span{color:var(--accent)}
+.navlinks{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.navlinks a{color:#33485b;font-size:.92rem}
+.langs{display:flex;gap:5px}
+.langs button{border:1px solid #cbd8e0;background:#fff;color:#42576a;padding:5px 9px;border-radius:8px;cursor:pointer}
+.langs button.active{background:var(--accent);border-color:var(--accent);color:white}
+main{max-width:1240px;margin:auto;padding:0 22px 60px}
+.hero{padding:86px 0 70px;text-align:left;display:grid;grid-template-columns:1.25fr .75fr;gap:60px;align-items:center}
+.eyebrow{color:var(--accent);font-size:.82rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+h1{font-size:clamp(2.8rem,6vw,5.4rem);line-height:.98;letter-spacing:-.055em;margin:16px 0 24px;max-width:800px}
+.hero p{font-size:1.12rem;color:var(--muted);max-width:760px}
+.hero-art{min-height:330px;border:1px solid var(--line);background:linear-gradient(145deg,#fff,#eef6f8);border-radius:28px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.hero-art:before,.hero-art:after{content:"";position:absolute;width:170px;height:390px;border:5px solid rgba(22,135,167,.18);border-radius:50%;top:-25px}
+.hero-art:before{left:105px;transform:rotate(22deg)}
+.hero-art:after{right:105px;transform:rotate(-22deg)}
+.hero-node{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border:2px solid var(--accent);border-radius:14px;padding:18px 22px;text-align:center;box-shadow:var(--shadow);font-weight:800}
+.section{padding:38px 0;scroll-margin-top:80px}
+.section-head{margin-bottom:22px}
+.section-head h2{font-size:2rem;line-height:1.15;margin:0 0 8px;letter-spacing:-.025em}
+.section-head p{color:var(--muted);max-width:900px;margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px}
+.prose p{margin:0 0 18px}.prose p:last-child{margin-bottom:0}
+.prose strong{color:#102c3b}
+.results-card{margin-bottom:24px}
+.family-explanations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.family-explanation{background:#fff;border:1px solid var(--line);border-radius:15px;padding:20px}
+.family-explanation h3{margin:0 0 8px;font-size:1.08rem}
+.family-explanation p{margin:0;color:#4f6171}
+.tree-wrap{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:24px;overflow:hidden}
+.tree{display:grid;grid-template-columns:210px minmax(0,1fr);align-items:center;min-width:0}
+.tree-root{display:flex;align-items:center;height:100%;padding-right:28px}
+.tree-root .node{width:100%}
+.tree-branches{display:grid;grid-template-columns:repeat(5,minmax(125px,1fr));gap:12px;position:relative;min-width:0}
+.branch-col{position:relative;display:flex;flex-direction:column;gap:12px;min-width:0}
+.branch-col:before{content:"";position:absolute;left:-12px;top:50%;width:12px;border-top:2px solid #b9ccd5}
+.branch-col.nested{padding-top:4px}
+.branch-col.nested:before{top:38px}
+.node{background:#fff;border:1px solid #b9d0da;border-radius:13px;padding:13px 12px;min-width:0}
+.node.haplo{border-color:#9dc4d0}
+.node .hap{font-weight:800;color:var(--accent2);font-size:.9rem;overflow-wrap:anywhere}
+.node .tmrca{font-size:.76rem;color:var(--muted);margin-top:2px}
+.node .family{font-weight:800;margin-top:8px;font-size:.95rem}
+.node .ancestor{font-size:.76rem;color:#516474;overflow-wrap:anywhere}
+.node .place{font-size:.76rem;color:#516474}
+.node.small{padding:10px}
+.node.small .family{margin-top:5px}
+.subtree{display:flex;flex-direction:column;gap:12px;padding-left:10px;border-left:2px solid #c5d5dc}
+.subtree .node{width:100%}
+.more-line{margin-top:16px;padding-top:18px;border-top:1px solid var(--line)}
+.more-line h3{margin:0 0 10px;font-size:1rem}
+.more-line .node{max-width:300px}
+.map-card{padding:0;overflow:hidden}
+#map{height:560px;width:100%}
+.map-note{padding:15px 22px;color:var(--muted);font-size:.95rem;border-top:1px solid var(--line)}
+.leaflet-container{font:inherit}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#fff;color:var(--text)}
+.leaflet-popup-content{margin:14px 16px}
+.marker-dot{width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 1px 8px rgba(22,135,167,.45)}
+.family-toolbar{display:flex;gap:10px;margin-bottom:18px}
+.family-toolbar input{flex:1;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;background:#fff}
+.family-count{color:var(--muted);font-size:.9rem;align-self:center}
+.family-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.family-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}
+.family-card h3{margin:0;font-size:1rem}.family-card .meta{color:var(--muted);font-size:.85rem;margin-top:5px}
+.family-card .hap{display:inline-block;margin-top:9px;padding:3px 8px;border-radius:999px;background:var(--soft);color:var(--accent2);font-size:.78rem;font-weight:700}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;min-height:130px}
+.step b{display:block;color:var(--accent);font-size:.82rem;margin-bottom:10px}
+.cta{background:#eaf5f7;border:1px solid #c5e0e7;border-radius:20px;padding:30px;display:flex;justify-content:space-between;gap:25px;align-items:center}
+.cta h2{margin:0 0 5px}.cta p{margin:0;color:#506775}
+.btn{display:inline-block;background:var(--accent);color:#fff;padding:12px 18px;border-radius:10px;font-weight:700;white-space:nowrap}
+.btn:hover{text-decoration:none;background:var(--accent2)}
+footer{border-top:1px solid var(--line);background:#fff;margin-top:30px}
+.footerin{max-width:1240px;margin:auto;padding:25px 22px;color:var(--muted);font-size:.88rem}
+@media(max-width:1000px){
+ .hero{grid-template-columns:1fr}.hero-art{min-height:260px}
+ .family-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .steps{grid-template-columns:repeat(2,1fr)}
+ .tree{grid-template-columns:1fr;gap:18px}.tree-root{padding-right:0}.tree-branches{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .navin{align-items:flex-start;flex-wrap:wrap}.navlinks{order:3;width:100%;justify-content:flex-start}
+ .family-explanations,.family-grid{grid-template-columns:1fr}
+ .steps{grid-template-columns:1fr}
+ h1{font-size:2.7rem}
+ .tree-branches{grid-template-columns:1fr}
+ #map{height:430px}
+ .cta{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+<nav>
+<div class="navin">
+<div class="brand">LANDSKRON <span>DNA</span></div>
+<div class="navlinks">
+<a href="#home" data-nav="home">Startseite</a>
+<a href="#ydna" data-nav="ydna">Was ist Y-DNA?</a>
+<a href="#results" data-nav="results">Ergebnisse</a>
+<a href="#map-section" data-nav="map">Genetische Karte</a>
+<a href="#families" data-nav="families">Familien</a>
+<a href="#participate" data-nav="participate">Teilnahme</a>
+<a href="#privacy" data-nav="privacy">Datenschutz</a>
+</div>
+<div class="langs"><button data-lang="de">DE</button><button data-lang="en">EN</button><button data-lang="cs">CZ</button></div>
+</div>
+</nav>
+
+<main>
+<section id="home" class="hero">
+<div>
+<div class="eyebrow" data-i18n="eyebrow">T. DOLESCHEL · GENETIC GENEALOGY</div>
+<h1 data-i18n="title">Y-DNA Forschung in der Region Landskron</h1>
+<p data-i18n="hero">Forschung zu direkten väterlichen Linien, historischen Familien und ihren genetischen Verbindungen in der Region Landskron, Letohrad und Ústí nad Orlicí und Umgebung.</p>
+<a class="btn" href="#ydna" data-i18n="hero_btn">Was ist Y-DNA?</a>
+</div>
+<div class="hero-art" aria-hidden="true"><div class="hero-node">R-BY92362<br><span style="font-size:.8rem;color:#607080">TMRCA 1293 CE</span></div></div>
+</section>
+
+<section id="ydna" class="section">
+<div class="section-head"><h2 data-i18n="ydna_title">Was ist Y-DNA?</h2></div>
+<div class="card prose" id="ydna-content"></div>
+</section>
+
+<section id="results" class="section">
+<div class="section-head"><h2 data-i18n="results_title">Die Ergebnisse dieser Forschung</h2></div>
+<div class="card prose" id="results-intro"></div>
+<div class="family-explanations" id="family-explanations"></div>
+<div class="section-head" style="margin-top:30px"><h2 data-i18n="tree_title">Die genetische Linie R-BY92362</h2></div>
+<div class="tree-wrap" id="tree"></div>
+</section>
+
+<section id="map-section" class="section">
+<div class="section-head"><h2 data-i18n="map_title">Genetische Karte</h2><p data-i18n="map_intro">Die Karte zeigt den jeweiligen historischen Herkunftsort.</p></div>
+<div class="card map-card"><div id="map"></div><div class="map-note" data-i18n="map_note">Die DNA Marker zeigen den jeweiligen historischen Herkunftsort.</div></div>
+</section>
+
+<section id="families" class="section">
+<div class="section-head"><h2 data-i18n="families_title">Untersuchte Familien</h2></div>
+<div class="family-toolbar"><input id="family-search" data-i18n-placeholder="search" placeholder="Nach Nachname, Ort oder Haplogruppe suchen …"><span class="family-count" id="family-count"></span></div>
+<div class="family-grid" id="family-grid"></div>
+</section>
+
+<section id="participate" class="section">
+<div class="section-head"><h2 data-i18n="participate_title">Am Projekt teilnehmen</h2></div>
+<div class="card prose" id="participate-content"></div>
+<div class="steps" id="steps" style="margin-top:18px"></div>
+</section>
+
+<section id="privacy" class="section">
+<div class="section-head"><h2 data-i18n="privacy_title">Datenschutz</h2></div>
+<div class="card prose" id="privacy-content"></div>
+</section>
+
+<section class="section">
+<div class="cta"><div><h2 data-i18n="cta_title">Stammt deine direkte väterliche Linie aus der Region?</h2><p data-i18n="cta_text">Dann kontaktiere mich gerne.</p></div><a class="btn" href="mailto:tdoleschel@gmx.de" data-i18n="contact">Projektkontakt</a></div>
+</section>
+</main>
+
+<footer><div class="footerin"><span data-i18n="footer">Y-DNA Forschung in der Region Landskron · T. Doleschel</span></div></footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const treeData = {"haplo":"R-BY92362","tmrca":"1293 CE","children":[{"label":"Koblížek","ancestor":"Franz Koblischke","year":"ca. 1688","place":"Čenkovice"},{"label":"Koblížek","ancestor":"Pavel, Sohn von Jakub Koblížek","year":"14.03.1668","place":"Bystřec"},{"haplo":"R-FTG95567","tmrca":"1861 CE","label":"Kobliska","ancestor":"Augustin Koblizek","year":"verheiratet 10.08.1729","place":"Střechov nad Sázavou"},{"haplo":"R-FTD54476","tmrca":"1504 CE","label":"Knápek","ancestor":"Martin Knápek, auch Doležel genannt","year":"1618","place":"Cotkytle; zuvor Výprachtice"},{"haplo":"R-Y414921","tmrca":"1385 CE","children":[{"haplo":"R-BY116135","tmrca":"1767 CE","label":"Dařílek","ancestor":"Jakub Dařílek","year":"ca. 1600","place":"Dolní Heřmanice"},{"haplo":"R-FTD96496","tmrca":"1468 CE","label":"Doleček","ancestor":"Jiří Doleček","year":"15.03.1655","place":"Mistrovice","children":[{"haplo":"R-FTD95791","tmrca":"1712 CE"}]}]},{"haplo":"R-FTA82359","tmrca":"1634 CE","label":"Doležal / Doležel / Doleschel","ancestor":"Jakub Doležal","year":"1611","place":"Čenkovice","children":[{"haplo":"R-FTC93245","tmrca":"1681 CE"},{"haplo":"R-FTF53163","tmrca":"1791 CE"},{"haplo":"R-FTA78783","tmrca":"1851 CE"}]}]};
+const families = [{"surname":"Stejskal","place":"Cermna","ancestor":"Josef Stejskal","year":1904,"haplogroup":"R-Z30"},{"surname":"Doležal","place":"České Libchavy","ancestor":"Jakub Doležal","year":1727,"haplogroup":"R-M269"},{"surname":"Ruprich","place":"Moravský Karlov","ancestor":"Georg Ruprich","year":"ca. 1609","haplogroup":"I-M227"},{"surname":"Březina","place":"Bohutín","ancestor":"Jan Březina","year":"ca. 1580","haplogroup":"R-FT232224"},{"surname":"Doležel","place":"Hoštice","ancestor":"Ignác Doležel","year":1818,"haplogroup":"R-M198"},{"surname":"Kadrman","place":"Ústí nad Orlicí","ancestor":"Jiří Kadrman","year":"ca. 1691","haplogroup":"R-CTS4299"},{"surname":"Ptáček","place":"Výprachtice","ancestor":null,"year":null,"haplogroup":"R-S17298"},{"surname":"Doležal","place":"Verměřovice","ancestor":"František Doležal","year":1755,"haplogroup":"R-Z156"},{"surname":"Teykl","place":"Crhov","ancestor":null,"year":null,"haplogroup":"I-Z63"},{"surname":"Beran","place":"Dolní Dobrouč","ancestor":"Prokop Beran","year":"ca. 1520","haplogroup":"R-FT251795"},{"surname":"Marek","place":"Bystřec","ancestor":"Beneš Marků","year":"ca. 1500","haplogroup":"R-FTA10345"},{"surname":"Motyčka","place":"Kunčice","ancestor":"Jiří Motyčka","year":"ca. 1627","haplogroup":"I-A815"},{"surname":"Mlynář","place":"Klášterec nad Orlicí","ancestor":"Karel Mlynář","year":1797,"haplogroup":"R-YP575"},{"surname":"Gregar","place":"Česká Třebová","ancestor":"Jiří Gregar","year":"ca. 1630","haplogroup":"R-M198"},{"surname":"Pecháček","place":"Čermná","ancestor":"Martin Pecháček","year":1624,"haplogroup":"R-Y1392"},{"surname":"Hrdina","place":"Bystřec","ancestor":"Jan Hrdina","year":1760,"haplogroup":"R-FT140646"},{"surname":"Haisler","place":"Čenkovice","ancestor":"Matěj Hezler","year":"ca. 1560","haplogroup":"R-FT228918"},{"surname":"Anderle","place":"Skuhrov","ancestor":"Joseph Anderle","year":"04.05.1820","haplogroup":"R-Y2905"},{"surname":"Bauer","place":"Rybník","ancestor":null,"year":"ca. 1675","haplogroup":"I-M253"},{"surname":"Bednář","place":"Jamné","ancestor":null,"year":null,"haplogroup":"R-YP445"},{"surname":"Centner","place":"Králíky","ancestor":null,"year":"ca. 1650","haplogroup":"I-M223"},{"surname":"Černohous","place":"Jamné nad Orlicí","ancestor":null,"year":null,"haplogroup":"R-CTS1555"},{"surname":"Doleček","place":"Mistrovice","ancestor":"Jan Doleček","year":1720,"haplogroup":"I-S4715"},{"surname":"Doleček","place":"Klášterec nad Orlicí","ancestor":"Leopold Doleček","year":"16.11.1837","haplogroup":"R-M269"},{"surname":"Doleček","place":"Lukavice","ancestor":null,"year":1926,"haplogroup":"I-M170"},{"surname":"Doleček","place":"Klášterec nad Orlicí","ancestor":null,"year":null,"haplogroup":"R-Y2905"},{"surname":"Doleček","place":"Šedivec","ancestor":"František Doleček","year":"17.11.1829","haplogroup":"R-Y2905"},{"surname":"Doleček","place":"Sobkovice","ancestor":null,"year":null,"haplogroup":"R-Y2905"},{"surname":"Doležal","place":"Vysoké Mýto","ancestor":"Jan Doležal","year":"21.12.1836","haplogroup":"R-M198"},{"surname":"Doležal","place":"Česká Třebová","ancestor":null,"year":null,"haplogroup":"R-M269"},{"surname":"Doležel","place":"Bohdíkov","ancestor":"Jan Doležel","year":1761,"haplogroup":"G-Z6414"},{"surname":"Dostálek","place":"Písečná","ancestor":null,"year":"ca. 1681","haplogroup":"R-M343"},{"surname":"Doubrava","place":"Sloupnice","ancestor":"František Doubrava","year":"14.09.1869","haplogroup":"G-FGC477"},{"surname":"Dušek","place":"Dolní Dobrouč","ancestor":null,"year":"ca. 1497","haplogroup":"I-M253"},{"surname":"Dušek","place":"Dolní Dobrouč","ancestor":"Jiří Dušek","year":1515,"haplogroup":"I-FT151267"},{"surname":"Friml","place":"Bartošovice v Orlických horách","ancestor":null,"year":"ca. 1682","haplogroup":"I-P37"},{"surname":"Jansa","place":"Čermná","ancestor":"Johann Jansa","year":1762,"haplogroup":"R-M198"},{"surname":"John","place":"Žamberk","ancestor":null,"year":1741,"haplogroup":"R-YP254"},{"surname":"Knop","place":"Helvíkovice","ancestor":null,"year":1722,"haplogroup":"I-P37"},{"surname":"Kolčava","place":"Zábřeh","ancestor":null,"year":null,"haplogroup":"R-Y2905"},{"surname":"Kulhánek","place":"Horní Heřmanice","ancestor":null,"year":"ca. 1530","haplogroup":"R-M343"},{"surname":"Litterbach","place":"Vysoké Mýto","ancestor":"Martin Litterbach","year":"05.11.1652","haplogroup":"I-FGC17811"},{"surname":"Macek","place":"Zborov","ancestor":null,"year":1690,"haplogroup":"R-M343"},{"surname":"Macháček","place":"Bystřec","ancestor":"Macháček","year":"ca. 1890","haplogroup":"R-M420"},{"surname":"Marek","place":"Horní Čermná","ancestor":"Josef Marek","year":1792,"haplogroup":"R-BY3221"},{"surname":"Marek","place":"Petrovice","ancestor":"Antonín Marek","year":"07.05.1736","haplogroup":"R-L151"},{"surname":"Mareš","place":"Výprachtice","ancestor":null,"year":null,"haplogroup":"R-L1029"},{"surname":"Matura","place":"Chromeč","ancestor":null,"year":1718,"haplogroup":"R-M343"},{"surname":"Merta","place":"Čenkovice 141","ancestor":"Josef Merta","year":1712,"haplogroup":"R-YP256"},{"surname":"Minář","place":"Herbortice","ancestor":"Josef Minář","year":1816,"haplogroup":"R-Y2905"},{"surname":"Neumann","place":"Lukavice","ancestor":"Jan Neumann","year":"17.10.1862","haplogroup":"Q-Y2209"},{"surname":"Opravil","place":"Václavov","ancestor":null,"year":null,"haplogroup":"R-L1029"},{"surname":"Petránek","place":"Helvíkovice","ancestor":null,"year":1835,"haplogroup":"R-M420"},{"surname":"Hejl","place":"Výprachtice 59","ancestor":"Jiří Hejl","year":"06.04.1674","haplogroup":"R-Y2905"},{"surname":"Pospíšil","place":"Mistrovice","ancestor":"Waczlaw Pospisyl","year":1633,"haplogroup":"R-PH4505"},{"surname":"Faltus","place":"Mistrovice","ancestor":null,"year":null,"haplogroup":"R-P278"}];
+const i18n = {
+de:{
+ eyebrow:"T. DOLESCHEL · GENETIC GENEALOGY",
+ title:"Y-DNA Forschung in der Region Landskron",
+ hero:"Forschung zu direkten väterlichen Linien, historischen Familien und ihren genetischen Verbindungen in der Region Landskron, Letohrad und Ústí nad Orlicí und Umgebung.",
+ hero_btn:"Was ist Y-DNA?",
+ ydna_title:"Was ist Y-DNA?",
+ ydna:[
+ "Y-DNA wird ausschließlich entlang der direkten väterlichen Linie vom Vater an den Sohn weitergegeben. Ein Mann trägt daher auf seinem Y-Chromosom einen genetischen Abdruck seiner väterlichen Vorfahren, der über viele Generationen weitergegeben wird.",
+ "Durch die Untersuchung bestimmter Veränderungen auf dem Y-Chromosom lassen sich Männer zu genetischen Linien und immer feineren Unterzweigen zusammenfassen. Diese sogenannten Haplogruppen und Subclades können anschließend zeitlich eingeordnet werden. Je weiter man in einem solchen Stammbaum zurückgeht, desto älter wird der gemeinsame väterliche Vorfahr eines Zweiges.",
+ "Für die genealogische Forschung ist besonders interessant, dass sich diese genetischen Linien mit historischen Familien und genealogischen Quellen vergleichen lassen. Wenn beispielsweise Männer mit unterschiedlichen heutigen Familiennamen denselben Y-DNA-Zweig teilen, kann dies darauf hinweisen, dass ihre direkten väterlichen Linien auf einen gemeinsamen Vorfahren zurückgehen, der lange vor der Entstehung der heutigen Familiennamen lebte.",
+ "Genau hier setzt dieses Projekt an: Die Ergebnisse der Y-DNA-Tests werden mit Kirchenbüchern, Grundbüchern und anderen historischen Quellen verbunden. Auf diese Weise lässt sich die Geschichte väterlicher Linien möglicherweise weiter zurückverfolgen, als es die schriftlichen Quellen allein erlauben.",
+ "<strong>Wichtig:</strong> Y-DNA untersucht dabei nur eine einzige Linie des Stammbaums, die ununterbrochene Linie vom Vater zum Vater zum Vater. Sie sagt daher nicht, dass zwei Menschen insgesamt eng miteinander verwandt sein müssen. Sie gibt vielmehr Auskunft über ihre gemeinsame direkte väterliche Abstammung."
+ ],
+ results_title:"Die Ergebnisse dieser Forschung",
+ results_intro:[
+ "Das folgende Diagramm zeigt die väterliche Linie <strong>R-BY92362</strong> und ihre heute bekannten Unterzweige. Die angezeigten Jahreszahlen geben die von FamilyTreeDNA geschätzte Zeit des jeweils gemeinsamen väterlichen Vorfahren eines Zweiges an.",
+ "Die genetischen Ergebnisse werden hier mit den ältesten bisher bekannten Vorfahren aus den genealogischen Quellen verbunden. Dadurch lässt sich nachvollziehen, wie verschiedene heute bestehende Familiennamen auf ältere gemeinsame väterliche Linien zurückführen.",
+ "Der <strong>gemeinsame Vorfahr dieser Linie</strong> lebte nach der derzeitigen Berechnung um das Jahr <strong>1293</strong>. Die darunterliegenden Zweige sind jünger und führen schließlich zu den historischen Familienlinien, die durch genealogische Quellen in der Region belegt werden konnten."
+ ],
+ tree_title:"Die genetische Linie R-BY92362",
+ familyIntro:[
+ ["Doležal / Doležel / Doleschel, Čenkovice","Meine eigene direkte väterliche Linie führt zu Jakub Doležal, der 1611 in Čenkovice ein Grundstück erwarb. Diese Linie ist heute dem genetischen Zweig <strong>R-FTA82359</strong> und seinen weiteren Unterzweigen zugeordnet."],
+ ["Knápek / Doležel, Cotkytle und Výprachtice","Der Vorfahr der Familie Knápek war Martin Knápek, auch Doležel genannt, der bereits im Jahr 1618 in Cotkytle genannt wird und aus Výprachtice stammte. Seine Linie ist dem Zweig <strong>R-FTD54476</strong> zugeordnet."],
+ ["Doleček, Mistrovice","Die Familie Doleček aus Mistrovice stammt von Jiří Doleček ab, der 1655 als Sohn von Václav Doleček in Mistrovice geboren wurde. Die Linie gehört zum Zweig <strong>R-FTD96496</strong> und dessen weiteren Unterzweigen."],
+ ["Dařílek, Dolní Heřmanice","Die Familie Dařílek stammt von Jakub Dařílek, geboren etwa um 1600 in <strong>Dolní Heřmanice</strong>, ab. Die Linie ist dem Zweig <strong>R-BY116135</strong> unterhalb von <strong>R-Y414921</strong> zugeordnet."],
+ ["Koblížek / Koblischke","Auch die Familie Koblížek beziehungsweise Koblischke ist Bestandteil der Untersuchung. Historische Vertreter dieser Linie sind unter anderem in <strong>Čenkovice und Bystřec</strong> belegt."],
+ ["Kobliska, Střechov nad Sázavou","Ein weiterer Zweig führt zur Familie Kobliska. Der entsprechende genetische Zweig <strong>R-FTG95567</strong> lässt sich mit der genealogisch dokumentierten Linie aus <strong>Střechov nad Sázavou</strong> verbinden."]
+ ],
+ map_title:"Genetische Karte",
+ map_intro:"Die Karte zeigt die jeweiligen historischen Herkunftsorte der untersuchten direkten väterlichen Linien.",
+ map_note:"Die DNA Marker zeigen den jeweiligen historischen Herkunftsort.",
+ families_title:"Untersuchte Familien",
+ search:"Nach Nachname, Ort oder Haplogruppe suchen …",
+ participate_title:"Am Projekt teilnehmen",
+ participate:[
+ "Gesucht werden Männer mit direkter väterlicher Abstammung aus der Region Landskron, Letohrad und Ústí nad Orlicí und Umgebung. Ich unterstütze Interessierte bei ihrer Familienforschung und stelle kostenlos einen Family Finder Test von FamilyTreeDNA zur Verfügung, bei dem auch die Y-DNA Haplogruppe bestimmt wird, oder einen MyHeritage DNA Test, bei dem ebenfalls die Haplogruppe bestimmt wird.",
+ "Falls ein Tester die Haplogruppe R-P278 hat, die Obergruppe meiner Haplogruppe R-BY92362, stelle ich kostenlos einen Big-Y Test von FamilyTreeDNA zur Verfügung. Mit diesem Test kann die genaue Untergruppe der väterlichen Linie bestimmt werden.",
+ "Mein Ziel ist es, alle Familien in der Region zu finden, die von meinem Vorfahren R-BY92362 abstammen, und gleichzeitig auch alle anderen väterlichen Linien aus der Region zu untersuchen."
+ ],
+ steps:["Direkte väterliche Abstammung aus der Region","Den ältesten bekannten Vorfahren der väterlichen Linie nennen und mich kontaktieren","Kostenloser MyHeritage DNA Test oder Family Finder Test von FamilyTreeDNA","Bei R-P278 kostenloser Big-Y Test von FamilyTreeDNA","Gemeinsame weitere Erforschung der Familiengeschichte"],
+ privacy_title:"Datenschutz",
+ privacy:["Es werden keine Namen lebender DNA Tester veröffentlicht.","Öffentlich erscheinen nur genealogische Angaben zu historischen Vorfahren, Herkunftsorten und anonymisierte genetische Forschungsergebnisse.","Personenbezogene DNA Informationen werden nicht öffentlich mit der Identität eines Teilnehmers verknüpft."],
+ cta_title:"Stammt deine direkte väterliche Linie aus der Region?",cta_text:"Dann kontaktiere mich gerne.",contact:"Projektkontakt",
+ footer:"Y-DNA Forschung in der Region Landskron · T. Doleschel"
+},
+en:{
+ eyebrow:"T. DOLESCHEL · GENETIC GENEALOGY",
+ title:"Y-DNA Research in the Landskron Region",
+ hero:"Research into direct paternal lines, historical families and their genetic connections in the Landskron, Letohrad and Ústí nad Orlicí region and surrounding area.",
+ hero_btn:"What is Y-DNA?",
+ ydna_title:"What is Y-DNA?",
+ ydna:[
+ "Y-DNA is passed exclusively along the direct paternal line, from father to son. A man therefore carries on his Y chromosome a genetic record of his paternal ancestors that can be passed down for many generations.",
+ "By examining particular changes on the Y chromosome, men can be grouped into genetic lines and increasingly fine subbranches. These haplogroups and subclades can then be dated. The further back such a tree reaches, the older the shared paternal ancestor of a branch becomes.",
+ "For genealogical research, it is especially useful that these genetic lines can be compared with historical families and genealogical sources. If men with different present day family names share the same Y-DNA branch, this may indicate that their direct paternal lines descend from a common ancestor who lived long before the emergence of today's hereditary surnames.",
+ "This is where the project comes in: Y-DNA results are connected with church registers, land registers and other historical sources. In this way, the history of paternal lines may be traced further back than the written sources alone allow.",
+ "<strong>Important:</strong> Y-DNA examines only one line of a family tree, the uninterrupted line from father to father to father. It therefore does not mean that two people must be closely related overall. It provides information specifically about their shared direct paternal ancestry."
+ ],
+ results_title:"The Results of This Research",
+ results_intro:[
+ "The following diagram shows the paternal line <strong>R-BY92362</strong> and its currently known subbranches. The dates shown indicate the estimated time of the shared paternal ancestor of each branch, as calculated by FamilyTreeDNA.",
+ "The genetic results are presented together with the oldest known ancestors identified through genealogical sources. This makes it possible to trace how different family names that exist today can be connected to older shared paternal lines.",
+ "According to the current calculation, the <strong>common ancestor of this line</strong> lived around the year <strong>1293</strong>. The branches below are younger and eventually lead to historical family lines documented through genealogical sources in the region."
+ ],
+ tree_title:"The genetic line R-BY92362",
+ familyIntro:[
+ ["Doležal / Doležel / Doleschel, Čenkovice","My own direct paternal line leads to Jakub Doležal, who acquired a property in Čenkovice in 1611. This line is now assigned to genetic branch <strong>R-FTA82359</strong> and its further subbranches."],
+ ["Knápek / Doležel, Cotkytle and Výprachtice","The ancestor of the Knápek family was Martin Knápek, also called Doležel, who is documented in Cotkytle in 1618 and came from Výprachtice. His line belongs to branch <strong>R-FTD54476</strong>."],
+ ["Doleček, Mistrovice","The Doleček family of Mistrovice descends from Jiří Doleček, who was born in Mistrovice in 1655 as the son of Václav Doleček. The line belongs to branch <strong>R-FTD96496</strong> and its further subbranches."],
+ ["Dařílek, Dolní Heřmanice","The Dařílek family descends from Jakub Dařílek, born around 1600 in <strong>Dolní Heřmanice</strong>. The line belongs to branch <strong>R-BY116135</strong> below <strong>R-Y414921</strong>."],
+ ["Koblížek / Koblischke","The Koblížek or Koblischke family is also part of the investigation. Historical representatives of this line are documented, among other places, in <strong>Čenkovice and Bystřec</strong>."],
+ ["Kobliska, Střechov nad Sázavou","Another branch leads to the Kobliska family. The corresponding genetic branch <strong>R-FTG95567</strong> can be connected with the genealogically documented line from <strong>Střechov nad Sázavou</strong>."]
+ ],
+ map_title:"Genetic Map",map_intro:"The map shows the respective historical places of origin of the investigated direct paternal lines.",map_note:"The DNA markers show the respective historical place of origin.",
+ families_title:"Investigated Families",search:"Search by surname, place or haplogroup …",
+ participate_title:"Participate in the Project",
+ participate:[
+ "Men with direct paternal ancestry from the Landskron, Letohrad and Ústí nad Orlicí region and surrounding area are sought. I support interested participants with their family research and provide a free Family Finder test from FamilyTreeDNA, which also determines the Y-DNA haplogroup, or a MyHeritage DNA test, which likewise determines the haplogroup.",
+ "If a tester has haplogroup R-P278, the parent group of my haplogroup R-BY92362, I provide a free Big-Y test from FamilyTreeDNA. This test can determine the precise subbranch of the paternal line.",
+ "My goal is to identify all families in the region who descend from my ancestor R-BY92362 while also investigating all other paternal lines from the region."
+ ],
+ steps:["Direct paternal ancestry from the region","Provide the oldest known paternal ancestor and contact me","Free MyHeritage DNA test or Family Finder test from FamilyTreeDNA","Free Big-Y test from FamilyTreeDNA if R-P278","Further family history research together"],
+ privacy_title:"Privacy",privacy:["No names of living DNA testers are published.","Only genealogical information about historical ancestors, places of origin and anonymised genetic research results is published.","Personal DNA information is not publicly linked to the identity of a participant."],
+ cta_title:"Does your direct paternal line come from the region?",cta_text:"Then feel free to contact me.",contact:"Project contact",footer:"Y-DNA Research in the Landskron Region · T. Doleschel"
+},
+cs:{
+ eyebrow:"T. DOLESCHEL · GENETICKÁ GENEALOGIE",
+ title:"Výzkum Y-DNA v regionu Lanškrouna",
+ hero:"Výzkum přímých otcovských linií, historických rodin a jejich genetických souvislostí v regionu Lanškrouna, Letohradu a Ústí nad Orlicí a v okolí.",
+ hero_btn:"Co je Y-DNA?",
+ ydna_title:"Co je Y-DNA?",
+ ydna:[
+ "Y-DNA se dědí výhradně v přímé otcovské linii, z otce na syna. Muž proto nese na chromozomu Y genetický otisk svých otcovských předků, který se může předávat po mnoho generací.",
+ "Zkoumáním určitých změn na chromozomu Y lze muže spojovat do genetických linií a stále jemnějších podvětví. Tyto haploskupiny a subclady lze následně časově datovat. Čím dále takový strom sahá do minulosti, tím starší je společný otcovský předek dané větve.",
+ "Pro genealogický výzkum je zvláště zajímavé, že tyto genetické linie lze porovnávat s historickými rodinami a genealogickými prameny. Pokud například muži s různými dnešními příjmeními sdílejí stejnou větev Y-DNA, může to naznačovat, že jejich přímé otcovské linie pocházejí od společného předka, který žil dávno před vznikem dnešních dědičných příjmení.",
+ "Právě na tom je tento projekt založen: výsledky testů Y-DNA jsou spojovány s matrikami, pozemkovými knihami a dalšími historickými prameny. Tímto způsobem lze historii otcovských linií sledovat možná dále do minulosti, než dovolují samotné písemné prameny.",
+ "<strong>Důležité:</strong> Y-DNA zkoumá pouze jednu jedinou linii rodokmenu, nepřerušenou linii od otce k otci k otci. Neznamená tedy, že dva lidé musí být celkově blízce příbuzní. Poskytuje informace konkrétně o jejich společném přímém otcovském původu."
+ ],
+ results_title:"Výsledky tohoto výzkumu",
+ results_intro:[
+ "Následující diagram zobrazuje otcovskou linii <strong>R-BY92362</strong> a její dnes známá podvětví. Uvedené letopočty představují odhadovaný čas společného otcovského předka jednotlivých větví podle FamilyTreeDNA.",
+ "Genetické výsledky jsou zde spojeny s nejstaršími dosud známými předky doloženými genealogickými prameny. Díky tomu lze sledovat, jak mohou různá dnešní příjmení souviset se staršími společnými otcovskými liniemi.",
+ "Podle současného výpočtu žil <strong>společný předek této linie</strong> přibližně kolem roku <strong>1293</strong>. Níže uvedené větve jsou mladší a postupně vedou k historickým rodovým liniím, které se podařilo doložit genealogickými prameny v regionu."
+ ],
+ tree_title:"Genetická linie R-BY92362",
+ familyIntro:[
+ ["Doležal / Doležel / Doleschel, Čenkovice","Moje vlastní přímá otcovská linie vede k Jakubu Doležalovi, který v roce 1611 získal pozemek v Čenkovicích. Tato linie je dnes zařazena do genetické větve <strong>R-FTA82359</strong> a jejích dalších podvětví."],
+ ["Knápek / Doležel, Cotkytle a Výprachtice","Předkem rodiny Knápek byl Martin Knápek, také Doležel, který je doložen v Cotkytli již v roce 1618 a pocházel z Výprachtic. Jeho linie patří do větve <strong>R-FTD54476</strong>."],
+ ["Doleček, Mistrovice","Rodina Doleček z Mistrovic pochází od Jiřího Dolečka, který se narodil v Mistrovicích v roce 1655 jako syn Václava Dolečka. Linie patří do větve <strong>R-FTD96496</strong> a jejích dalších podvětví."],
+ ["Dařílek, Dolní Heřmanice","Rodina Dařílek pochází od Jakuba Dařílka, narozeného přibližně kolem roku 1600 v <strong>Dolních Heřmanicích</strong>. Linie patří do větve <strong>R-BY116135</strong> pod <strong>R-Y414921</strong>."],
+ ["Koblížek / Koblischke","Rodina Koblížek neboli Koblischke je rovněž součástí výzkumu. Historické představitele této linie lze doložit mimo jiné v <strong>Čenkovicích a Bystřeci</strong>."],
+ ["Kobliska, Střechov nad Sázavou","Další větev vede k rodině Kobliska. Příslušná genetická větev <strong>R-FTG95567</strong> se spojuje s genealogicky doloženou linií ze <strong>Střechova nad Sázavou</strong>."]
+ ],
+ map_title:"Genetická mapa",map_intro:"Mapa zobrazuje příslušná historická místa původu zkoumaných přímých otcovských linií.",map_note:"DNA markery zobrazují příslušné historické místo původu.",
+ families_title:"Zkoumané rodiny",search:"Hledat podle příjmení, místa nebo haploskupiny …",
+ participate_title:"Zapojení do projektu",
+ participate:[
+ "Hledám muže s přímým otcovským původem z regionu Lanškrouna, Letohradu a Ústí nad Orlicí a okolí. Zájemcům pomáhám s jejich rodinným výzkumem a poskytuji zdarma test Family Finder od FamilyTreeDNA, při kterém se určuje také haploskupina Y-DNA, nebo test MyHeritage DNA, při kterém se rovněž určuje haploskupina.",
+ "Pokud má tester haploskupinu R-P278, což je nadřazená skupina mé haploskupiny R-BY92362, poskytnu zdarma test Big-Y od FamilyTreeDNA. Ten umožní určit přesnou podvětev otcovské linie.",
+ "Mým cílem je najít všechny rodiny v regionu, které pocházejí od mého předka R-BY92362, a zároveň zkoumat i všechny další otcovské linie z tohoto regionu."
+ ],
+ steps:["Přímý otcovský původ z regionu","Uvést nejstaršího známého předka v otcovské linii a kontaktovat mě","Bezplatný test MyHeritage DNA nebo Family Finder od FamilyTreeDNA","Při R-P278 bezplatný test Big-Y od FamilyTreeDNA","Společný další výzkum rodinné historie"],
+ privacy_title:"Ochrana soukromí",privacy:["Jména žijících DNA testerů nejsou zveřejňována.","Veřejně jsou uváděny pouze genealogické údaje o historických předcích, místech původu a anonymizované výsledky genetického výzkumu.","Osobní údaje DNA nejsou veřejně spojovány s identitou účastníka."],
+ cta_title:"Pochází vaše přímá otcovská linie z tohoto regionu?",cta_text:"Pak mě neváhejte kontaktovat.",contact:"Kontakt na projekt",footer:"Výzkum Y-DNA v regionu Lanškrouna · T. Doleschel"
+}};
+let lang="de", map=null, markerLayer=null;
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
+function t(k){return i18n[lang][k];}
+
+function nodeHTML(n, extra=""){
+ const bits=[];
+ if(n.haplo) bits.push('<div class="hap">'+esc(n.haplo)+'</div>');
+ if(n.tmrca) bits.push('<div class="tmrca">TMRCA '+esc(n.tmrca)+'</div>');
+ if(n.label) bits.push('<div class="family">'+esc(n.label)+'</div>');
+ if(n.ancestor) bits.push('<div class="ancestor">'+esc(n.ancestor)+'</div>');
+ if(n.year) bits.push('<div class="ancestor">'+esc(n.year)+'</div>');
+ if(n.place) bits.push('<div class="place">'+esc(n.place)+'</div>');
+ return '<div class="node '+extra+'">'+bits.join("")+'</div>';
+}
+function renderTree(){
+ const root=nodeHTML(treeData,"haplo");
+ const cols=treeData.children.map(ch=>{
+   let inner=nodeHTML(ch,ch.haplo?"haplo":"");
+   if(ch.children){
+     inner += '<div class="subtree">'+ch.children.map(x=>nodeHTML(x,x.haplo?"haplo":"small")).join("")+'</div>';
+   }
+   return '<div class="branch-col">'+inner+'</div>';
+ }).join("");
+ document.getElementById("tree").innerHTML='<div class="tree"><div class="tree-root">'+root+'</div><div class="tree-branches">'+cols+'</div></div>';
+}
+
+function renderFamilies(){
+ const q=(document.getElementById("family-search").value||"").toLowerCase().trim();
+ const list=families.filter(f=>[f.surname,f.place,f.ancestor,f.haplogroup,f.year].join(" ").toLowerCase().includes(q));
+ document.getElementById("family-count").textContent=list.length+" / "+families.length;
+ document.getElementById("family-grid").innerHTML=list.map(f=>'<article class="family-card"><h3>'+esc(f.surname)+'</h3><div class="meta">'+esc(f.place)+(f.ancestor?" · "+esc(f.ancestor):"")+(f.year?" · "+esc(f.year):"")+'</div><span class="hap">'+esc(f.haplogroup)+'</span></article>').join("");
+}
+function renderLanguage(){
+ document.documentElement.lang=lang;
+ document.querySelectorAll("[data-i18n]").forEach(el=>{const k=el.dataset.i18n; if(i18n[lang][k]) el.innerHTML=i18n[lang][k];});
+ document.querySelector('[data-i18n="title"]').textContent=i18n[lang].title;
+ document.getElementById("ydna-content").innerHTML=i18n[lang].ydna.map(p=>"<p>"+p+"</p>").join("");
+ document.getElementById("results-intro").innerHTML=i18n[lang].results_intro.map(p=>"<p>"+p+"</p>").join("");
+ document.getElementById("family-explanations").innerHTML=i18n[lang].familyIntro.map(x=>'<article class="family-explanation"><h3>'+x[0]+'</h3><p>'+x[1]+'</p></article>').join("");
+ document.getElementById("participate-content").innerHTML=i18n[lang].participate.map(p=>"<p>"+p+"</p>").join("");
+ document.getElementById("privacy-content").innerHTML=i18n[lang].privacy.map(p=>"<p>"+p+"</p>").join("");
+ document.getElementById("family-search").placeholder=i18n[lang].search;
+ document.querySelectorAll("[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang));
+ renderTree();renderFamilies();renderMap();
+}
+function initMap(){
+ if(!window.L) return;
+ map=L.map("map",{scrollWheelZoom:false,zoomControl:true}).setView([49.96,16.62],10);
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);
+ markerLayer=L.layerGroup().addTo(map);
+ renderMap();
+}
+const mapData=[
+ {place:"Čenkovice",lat:50.015278,lng:16.683889,info:"Doležal / Doležel / Doleschel · R-FTA82359"},
+ {place:"Bystřec",lat:50.011667,lng:16.618889,info:"Koblížek / Koblischke"},
+ {place:"Cotkytle",lat:49.936389,lng:16.723889,info:"Knápek / Doležel · R-FTD54476"},
+ {place:"Výprachtice",lat:49.985278,lng:16.663056,info:"Knápek / Doležel · R-FTD54476"},
+ {place:"Mistrovice",lat:50.02367,lng:16.57151,info:"Doleček · R-FTD96496"},
+ {place:"Dolní Heřmanice",lat:49.992733,lng:16.497658,info:"Dařílek · R-BY116135"},
+ {place:"Střechov nad Sázavou",lat:49.82,lng:14.92,info:"Kobliska · R-FTG95567"},
+ {place:"Landskron",lat:49.9121674,lng:16.611899,info:"R-BY92362"}
+];
+function renderMap(){
+ if(!map||!markerLayer) return;
+ markerLayer.clearLayers();
+ mapData.forEach(d=>{
+   const icon=L.divIcon({className:"",html:'<div class="marker-dot"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+   L.marker([d.lat,d.lng],{icon}).addTo(markerLayer).bindPopup("<strong>"+esc(d.place)+"</strong><br>"+esc(d.info));
+ });
+}
+document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>{lang=b.dataset.lang;renderLanguage();}));
+document.getElementById("family-search").addEventListener("input",renderFamilies);
+initMap();renderLanguage();
+</script>
+</body></html>
